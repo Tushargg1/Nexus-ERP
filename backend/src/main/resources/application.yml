@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: company-backend
+  datasource:
+    url: jdbc:h2:file:./database/garmenterp;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:noreply@garmentco.com}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 8080
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    expiration: 86400000
+  mail:
+    # Set to true (and configure spring.mail credentials) to send real emails.
+    # When false, password-reset emails are logged to the server console.
+    enabled: ${MAIL_ENABLED:false}
+  installer:
+    # Absolute or relative path to the packaged installer zip served by the
+    # gated /api/v1/software/download endpoint. Overridable via INSTALLER_PATH.
+    path: ${INSTALLER_PATH:src/main/resources/installer/nexus-erp-pro-v2.4.1.zip}
+  company:
+    name: Garment Manufacturing Co.
+    address: 123 Industrial Area, Mumbai, Maharashtra - 400001
+    gst: 27AABCU9603R1ZX
+    phone: +91-9876543210
+    email: info@garmentco.com
+  backup:
+    path: ${user.home}/GarmentERPBackups/
+    cron: "0 0 2 * * *"
+  low-stock-threshold: 10
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
