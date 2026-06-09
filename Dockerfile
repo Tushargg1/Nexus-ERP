@@ -6,14 +6,15 @@
 # ============================================================
 
 # ---- Stage 1: Frontend ----
-FROM node:20-alpine AS frontend
+FROM node:20-bookworm-slim AS frontend
 WORKDIR /app/frontend
 # Install deps first (better layer caching)
 COPY frontend/package*.json ./
-RUN npm ci
-# Build the frontend; output goes to backend static folder via vite config
+# npm install is more tolerant than npm ci across platforms/arch (native deps
+# like esbuild/rollup resolve correctly here on the Linux build host)
+RUN npm install --no-audit --no-fund
+# Build the frontend
 COPY frontend/ ./
-# Use the website build (full SaaS site). Output to a local dist we then copy.
 RUN npm run build
 
 # ---- Stage 2: Backend (Maven) ----
@@ -30,7 +31,7 @@ COPY --from=frontend /app/frontend/dist/ ./src/main/resources/static/
 RUN mvn -q -DskipTests clean package
 
 # ---- Stage 3: Runtime ----
-FROM eclipse-temurin:17-jre-alpine AS runtime
+FROM eclipse-temurin:17-jre AS runtime
 WORKDIR /app
 # Copy the built executable JAR (exclude the *.jar.original produced by Spring Boot repackage)
 COPY --from=backend /app/backend/target/garment-erp-*.jar app.jar
