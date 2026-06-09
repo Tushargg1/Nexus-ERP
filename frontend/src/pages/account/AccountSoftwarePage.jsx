@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import useAuthStore from '../../store/authStore'
 import { registrationAPI } from '../../api/registration'
 import client from '../../api/client'
+import { API_BASE_URL } from '../../config/appConfig'
 
 const SOFTWARE_CATALOG = [
   {
@@ -71,31 +72,60 @@ export default function AccountSoftwarePage() {
         toast.error(messages[latest] || 'Download not available.')
         return
       }
-      // Still approved — fetch the gated installer from the server
-      const res = await client.get('/software/download', {
-        params: { email: user?.email },
-        responseType: 'blob',
-      })
+      // Still approved — probe the gated endpoint first. The server either
+      // streams the file or (preferably) issues a redirect to an externally
+      // hosted installer. We can't read a cross-origin redirect via XHR, so we
+      // handle the download by navigating the browser to the gated URL, which
+      // follows redirects natively and isn't subject to CORS.
+      const base = API_BASE_URL ? `${API_BASE_URL}/api/v1` : '/api/v1'
+      const downloadUrl = `${base}/software/download?email=${encodeURIComponent(user?.email)}`
 
-      // If the server returned JSON (an error/unavailable message) instead of a file
-      const contentType = res.headers['content-type'] || ''
-      if (contentType.includes('application/json')) {
-        const text = await res.data.text()
-        const msg = JSON.parse(text)?.message || 'Download not available yet.'
-        toast.error(msg)
+      // Probe with a HEAD/GET to surface "not available" (404) or "blocked"
+      // (403) as a friendly toast instead of opening a blank tab. We allow the
+      // redirect to be followed; if it lands on a file, we hand off to the
+      // browser navigation below.
+      try {
+        const probe = await client.get('/software/download', {
+          params: { email: user?.email },
+          responseType: 'blob',
+        })
+        const contentType = probe.headers['content-type'] || ''
+        if (contentType.includes('application/json')) {
+          const text = await probe.data.text()
+          const msg = JSON.parse(text)?.message || 'Download not available yet.'
+          toast.error(msg)
+          return
+        }
+        // The backend streamed the file directly (bundled/disk mode).
+        const blobUrl = window.URL.createObjectURL(probe.data)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = 'nexus-erp-pro-v2.4.1.zip'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(blobUrl)
+        toast.success('Download started.')
+        return
+      } catch (probeErr) {
+        // A cross-origin redirect to the hosted installer makes the XHR fail
+        // (opaque/blocked). That's expected — fall back to a direct browser
+        // navigation, which follows the 302 to the hosted file natively.
+        const st = probeErr.response?.status
+        if (st === 403) {
+          toast.error('Your license is not approved. Download blocked.')
+          await checkApprovalStatus()
+          return
+        }
+        if (st === 404) {
+          toast.error('The installer is not available yet. Please contact support.')
+          return
+        }
+        // Network/CORS failure from a redirect — open the gated URL directly.
+        window.location.href = downloadUrl
+        toast.success('Download started.')
         return
       }
-
-      // Trigger the browser download of the received file
-      const blobUrl = window.URL.createObjectURL(res.data)
-      const link = document.createElement('a')
-      link.href = blobUrl
-      link.download = 'nexus-erp-pro-v2.4.1.zip'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(blobUrl)
-      toast.success('Download started.')
     } catch (err) {
       const status = err.response?.status
       if (status === 403) {

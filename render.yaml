@@ -28,6 +28,10 @@ services:
       # ---- App secrets ----
       - key: JWT_SECRET
         generateValue: true
+      # ---- Installer download (hosted externally as a GitHub Release asset) ----
+      # Approved clients are redirected here by /api/v1/software/download.
+      - key: INSTALLER_URL
+        value: https://github.com/Tushargg1/Nexus-ERP/releases/download/installer-v2.4.1/nexus-erp-pro-v2.4.1.zip
       # ---- Optional email (leave disabled unless you configure SMTP) ----
       - key: MAIL_ENABLED
         value: "false"

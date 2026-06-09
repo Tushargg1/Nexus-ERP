@@ -44,6 +44,10 @@ app:
     # Absolute or relative path to the packaged installer zip served by the
     # gated /api/v1/software/download endpoint. Overridable via INSTALLER_PATH.
     path: ${INSTALLER_PATH:src/main/resources/installer/nexus-erp-pro-v2.4.1.zip}
+    # External URL where the installer is hosted (e.g. a GitHub Release asset).
+    # When set, approved clients are redirected here instead of streaming the
+    # file through the backend. Overridable via INSTALLER_URL.
+    url: ${INSTALLER_URL:}
   company:
     name: Garment Manufacturing Co.
     address: 123 Industrial Area, Mumbai, Maharashtra - 400001

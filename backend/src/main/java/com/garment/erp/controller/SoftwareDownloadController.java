@@ -39,6 +39,16 @@ public class SoftwareDownloadController {
     @Value("${app.installer.path:}")
     private String installerPath;
 
+    /**
+     * Optional external URL where the installer is hosted (e.g. a GitHub Release
+     * asset, S3, or R2 object). When set, approved clients are redirected here
+     * instead of streaming the file through the backend. This is the preferred
+     * approach for large installers so the app server stays light.
+     * Configure with INSTALLER_URL env var or app.installer.url property.
+     */
+    @Value("${app.installer.url:}")
+    private String installerUrl;
+
     private static final String DOWNLOAD_FILENAME = "nexus-erp-pro-v2.4.1.zip";
 
     @GetMapping("/download")
@@ -53,7 +63,15 @@ public class SoftwareDownloadController {
             byte[] data;
             String filename = DOWNLOAD_FILENAME;
 
-            // 1. Prefer an externally configured installer file
+            // 1. Prefer redirecting to an externally hosted installer URL. This
+            //    keeps large binaries off the app server (recommended for prod).
+            if (installerUrl != null && !installerUrl.isBlank()) {
+                return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(java.net.URI.create(installerUrl))
+                    .build();
+            }
+
+            // 2. Next, an externally configured installer file on disk
             if (installerPath != null && !installerPath.isBlank()) {
                 File f = new File(installerPath);
                 if (f.exists() && f.isFile()) {
@@ -63,7 +81,7 @@ public class SoftwareDownloadController {
                 }
             }
 
-            // 2. Fall back to a bundled installer resource if present
+            // 3. Fall back to a bundled installer resource if present
             ClassPathResource bundled = new ClassPathResource("installer/" + DOWNLOAD_FILENAME);
             if (bundled.exists()) {
                 try (InputStream in = bundled.getInputStream()) {
@@ -72,7 +90,7 @@ public class SoftwareDownloadController {
                 return streamFile(data, DOWNLOAD_FILENAME);
             }
 
-            // 3. Nothing available yet — return a clear, valid error (not a broken file)
+            // 4. Nothing available yet — return a clear, valid error (not a broken file)
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("{\"message\":\"The installer is not available yet. Please contact support.\"}");
