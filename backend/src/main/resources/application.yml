@@ -2,15 +2,17 @@ spring:
   application:
     name: company-backend
   datasource:
-    url: jdbc:h2:file:./database/garmenterp;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
-    username: sa
-    password: 
-    driver-class-name: org.h2.Driver
+    # Defaults to a local H2 file. On Render (or any host) override these env vars
+    # to point at a managed database such as PostgreSQL.
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:file:./database/garmenterp;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.h2.Driver}
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: false
-    database-platform: org.hibernate.dialect.H2Dialect
+    # Dialect is auto-detected from the driver, so it works for both H2 and PostgreSQL.
   flyway:
     enabled: false
     locations: classpath:db/migration
@@ -28,7 +30,7 @@ spring:
             enable: true
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 app:
   jwt:

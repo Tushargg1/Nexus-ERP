@@ -1,0 +1,17 @@
+# Keep the Docker build context small and clean
+**/node_modules
+**/target
+**/dist
+dist-app/
+release/
+verify-extract/
+backend/database/
+**/*.mv.db
+**/*.log
+.git/
+.kiro/
+.vscode/
+backend/src/main/resources/static/
+backend/src/main/resources/installer/
+backend/Generate*.java
+backend/Fix*.java

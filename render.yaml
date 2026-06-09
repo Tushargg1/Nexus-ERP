@@ -1,0 +1,33 @@
+# ============================================================
+#  Render Blueprint - Nexus ERP (single Docker web service)
+#  Database lives on Aiven (MySQL); this only hosts the app.
+#
+#  Secret values (DB url/user/password, JWT secret) are NOT in
+#  this file. Set them in the Render dashboard as env vars, or
+#  mark sync:false here and Render will prompt for them.
+# ============================================================
+services:
+  - type: web
+    name: nexus-erp
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/v1/ping
+    envVars:
+      # ---- Database (Aiven MySQL) ----
+      # Example URL (note the JDBC format, ssl required by Aiven):
+      # jdbc:mysql://<host>:<port>/defaultdb?sslMode=REQUIRED
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: SPRING_DATASOURCE_DRIVER
+        value: com.mysql.cj.jdbc.Driver
+      # ---- App secrets ----
+      - key: JWT_SECRET
+        generateValue: true
+      # ---- Optional email (leave disabled unless you configure SMTP) ----
+      - key: MAIL_ENABLED
+        value: "false"
