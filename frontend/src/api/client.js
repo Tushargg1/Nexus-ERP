@@ -72,9 +72,19 @@ client.interceptors.response.use(
       if (token === 'trial-token-demo') {
         return Promise.reject(error)
       }
-      localStorage.removeItem('erp_token')
-      localStorage.removeItem('erp_user')
-      window.location.href = '/login'
+      // Don't force a redirect when the failing request is itself a login /
+      // auth attempt — otherwise the page reloads and the user never sees the
+      // "invalid credentials" / error message. Let the caller handle it.
+      const reqUrl = error.config?.url || ''
+      const isAuthRequest =
+        reqUrl.includes('/auth/') ||
+        reqUrl.includes('/login') ||
+        reqUrl.includes('/client-registrations')
+      if (!isAuthRequest) {
+        localStorage.removeItem('erp_token')
+        localStorage.removeItem('erp_user')
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }
