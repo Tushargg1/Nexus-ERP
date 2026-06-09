@@ -68,6 +68,27 @@ public class AuthService {
             userRepository.save(admin);
             log.info("Website admin user (admin@nexuserp.com) created.");
         }
+
+        // Ensure the primary admin account (Tushar) exists with OWNER access.
+        // Idempotent: creates it if missing, otherwise enforces role/password/active
+        // so a redeploy reliably (re)applies the intended credentials.
+        userRepository.findByEmail("tushargoel711@gmail.com").ifPresentOrElse(existing -> {
+            existing.setPassword(passwordEncoder.encode("Tushar@323"));
+            existing.setRole(User.Role.OWNER);
+            existing.setActive(true);
+            userRepository.save(existing);
+            log.info("Primary admin user (tushargoel711@gmail.com) updated.");
+        }, () -> {
+            User tushar = User.builder()
+                    .name("Tushar Goel")
+                    .email("tushargoel711@gmail.com")
+                    .password(passwordEncoder.encode("Tushar@323"))
+                    .role(User.Role.OWNER)
+                    .active(true)
+                    .build();
+            userRepository.save(tushar);
+            log.info("Primary admin user (tushargoel711@gmail.com) created.");
+        });
     }
 
     public AuthResponse login(LoginRequest request) {
