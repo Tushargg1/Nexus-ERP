@@ -18,9 +18,14 @@ export const APP_MODE = import.meta.env.VITE_APP_MODE || 'website'
 
 export const IS_INSTALLED_APP = APP_MODE === 'installed'
 
-// Where the installed app verifies its license. Empty string = same origin.
+// Backend origin for the website build when hosted separately (e.g. Vercel
+// frontend → Render backend). Empty string = same origin (bundled/local).
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+
+// Where the installed app verifies its license. Falls back to API_BASE_URL,
+// then same origin.
 export const LICENSE_SERVER_URL =
-  import.meta.env.VITE_LICENSE_SERVER_URL || ''
+  import.meta.env.VITE_LICENSE_SERVER_URL || API_BASE_URL || ''
 
 // localStorage keys used by the license gate
 export const LICENSE_KEYS = {

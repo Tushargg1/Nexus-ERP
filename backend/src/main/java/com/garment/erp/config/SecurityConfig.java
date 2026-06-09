@@ -74,7 +74,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*"));
+        // Allowed origins are configurable via the CORS_ALLOWED_ORIGINS env var
+        // (comma-separated). Defaults to "*" so the Vercel frontend works out of
+        // the box. To tighten, set e.g.
+        //   CORS_ALLOWED_ORIGINS=https://nexus-erp-theta-seven.vercel.app
+        String origins = System.getenv().getOrDefault("CORS_ALLOWED_ORIGINS", "*");
+        if ("*".equals(origins.trim())) {
+            configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        } else {
+            configuration.setAllowedOrigins(Arrays.asList(origins.split("\\s*,\\s*")));
+        }
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setExposedHeaders(Arrays.asList("Content-Disposition", "Content-Type", "Content-Length"));

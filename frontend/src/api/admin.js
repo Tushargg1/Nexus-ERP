@@ -1,8 +1,9 @@
 import axios from 'axios'
+import { API_BASE_URL } from '../config/appConfig'
 
 // Separate axios instance for admin that uses its own token
 const adminClient = axios.create({
-  baseURL: '/api/v1/admin',
+  baseURL: API_BASE_URL ? `${API_BASE_URL}/api/v1/admin` : '/api/v1/admin',
   headers: { 'Content-Type': 'application/json' },
 })
 

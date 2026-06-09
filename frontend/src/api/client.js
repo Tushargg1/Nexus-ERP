@@ -1,7 +1,12 @@
 import axios from 'axios'
+import { API_BASE_URL } from '../config/appConfig'
 
 // Set to true for the SaaS Landing Page Demo (Currently False for Local Installation)
 export const DEMO_MODE = false;
+
+// API base. When hosted separately (Vercel), API_BASE_URL points at the backend
+// origin; otherwise it's empty and we use the relative '/api/v1' (bundled/local).
+const API_BASE = API_BASE_URL ? `${API_BASE_URL}/api/v1` : '/api/v1'
 
 // Check if the current session is a trial/demo session
 export const isTrialMode = () => {
@@ -9,7 +14,7 @@ export const isTrialMode = () => {
 }
 
 const client = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },
